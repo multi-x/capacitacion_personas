@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Panel de Capacitaciones · Multi-X</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA9nrkIVS7o8h8865KoLWcLqeyiCzhLhwA",
+  authDomain: "capacitaciones-29aab.firebaseapp.com",
+  projectId: "capacitaciones-29aab",
+  storageBucket: "capacitaciones-29aab.firebasestorage.app",
+  messagingSenderId: "1013033091630",
+  appId: "1:1013033091630:web:d94384de993c34bb3c55bf"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+window._db         = db;
+window._collection = collection;
+window._addDoc     = addDoc;
+window._getDocs    = getDocs;
+window._deleteDoc  = deleteDoc;
+window._doc        = doc;
+window._onSnapshot = onSnapshot;
+window._query      = query;
+window._orderBy    = orderBy;
+window._fbReady    = true;
+document.dispatchEvent(new Event('fb-ready'));
+</script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#002B4F;
+  --navy-dark:#001e38;
+  --navy-light:#003d6e;
+  --salmon:#E8523A;
+  --salmon-light:#f06b55;
+  --bg:#f4f6f8;
+  --surface:#ffffff;
+  --card:#ffffff;
+  --border:#dce3ea;
+  --border-strong:#b0bec9;
+  --fg:#0d1f2d;
+  --muted:#6b7f8e;
+  --muted-light:#97aab6;
+  --success:#1a9e6e;
+  --danger:#d63b2a;
+  --sidebar-w:260px;
+}
+
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--fg);min-height:100vh}
+
+/* ── SIDEBAR ─────────────────────────────────────────────────── */
+aside{
+  position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;
+  background:var(--navy);
+  display:flex;flex-direction:column;z-index:50;
+}
+
+.logo-area{
+  padding:1.6rem 1.4rem 1.4rem;
+  border-bottom:1px solid rgba(255,255,255,0.1);
+  display:flex;align-items:center;gap:0.9rem;
+}
+
+/* SVG logo Multi-X inline */
+.logo-svg{flex-shrink:0;width:48px;height:48px}
+
+.logo-text{line-height:1.2}
+.logo-text .brand{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.3rem;font-weight:700;
+  color:#ffffff;letter-spacing:0.04em;text-transform:uppercase;
+}
+.logo-text .sub{
+  font-size:0.68rem;font-weight:400;
+  color:rgba(255,255,255,0.45);
+  text-transform:uppercase;letter-spacing:0.08em;
+}
+
+nav{flex:1;padding:1rem 0;overflow-y:auto}
+.nav-section{
+  font-size:0.62rem;font-weight:700;letter-spacing:0.12em;
+  text-transform:uppercase;color:rgba(255,255,255,0.3);
+  padding:1rem 1.4rem 0.4rem;
+}
+.nav-item{
+  display:flex;align-items:center;gap:0.8rem;
+  padding:0.72rem 1.4rem;
+  cursor:pointer;font-size:0.88rem;font-weight:500;
+  color:rgba(255,255,255,0.55);
+  border-left:3px solid transparent;
+  transition:all 0.18s;position:relative;
+}
+.nav-item:hover{
+  color:rgba(255,255,255,0.9);
+  background:rgba(255,255,255,0.06);
+}
+.nav-item.active{
+  color:#ffffff;
+  border-left-color:var(--salmon);
+  background:rgba(232,82,58,0.12);
+}
+.nav-icon{font-size:1rem;width:20px;text-align:center;opacity:0.9}
+
+.sidebar-footer{
+  padding:1.1rem 1.4rem;
+  border-top:1px solid rgba(255,255,255,0.1);
+  font-size:0.7rem;color:rgba(255,255,255,0.35);line-height:1.8;
+}
+.dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--danger);display:inline-block;
+  margin-right:5px;animation:blink 2s ease infinite;
+}
+.dot.green{background:var(--success)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* ── MAIN ────────────────────────────────────────────────────── */
+main{margin-left:var(--sidebar-w);min-height:100vh}
+
+.topbar{
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:0 2.5rem;
+  height:60px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:40;
+}
+.topbar-left{display:flex;align-items:center;gap:0.6rem}
+.topbar-breadcrumb{font-size:0.8rem;color:var(--muted)}
+.topbar-title{font-size:0.95rem;font-weight:600;color:var(--fg)}
+.live-badge{
+  font-size:0.65rem;font-weight:700;letter-spacing:0.06em;
+  background:rgba(26,158,110,0.1);color:var(--success);
+  padding:0.18rem 0.6rem;border-radius:20px;text-transform:uppercase;
+}
+
+.content{padding:2.5rem}
+.page{display:none}
+.page.active{display:block;animation:fadeUp 0.25s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── PAGE HEADER ─────────────────────────────────────────────── */
+.page-header{margin-bottom:2rem;display:flex;justify-content:space-between;align-items:flex-start}
+.page-header h2{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:2rem;font-weight:700;
+  color:var(--navy);letter-spacing:0.01em;
+}
+.page-header p{font-size:0.82rem;color:var(--muted);margin-top:0.25rem}
+
+/* ── CARDS ───────────────────────────────────────────────────── */
+.card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:10px;padding:1.6rem;margin-bottom:1rem;
+}
+
+/* ── STATS ───────────────────────────────────────────────────── */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2rem}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:1.4rem 1.6rem;
+  border-top:3px solid var(--navy);
+  transition:box-shadow 0.2s;
+}
+.stat-card:hover{box-shadow:0 4px 20px rgba(0,43,79,0.1)}
+.stat-num{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:2.4rem;font-weight:700;color:var(--navy);
+}
+.stat-label{font-size:0.76rem;color:var(--muted);margin-top:0.2rem;text-transform:uppercase;letter-spacing:0.06em;font-weight:600}
+.stat-card:nth-child(2) .stat-num{color:var(--salmon)}
+.stat-card:nth-child(2){border-top-color:var(--salmon)}
+.stat-card:nth-child(3) .stat-num{color:var(--success)}
+.stat-card:nth-child(3){border-top-color:var(--success)}
+
+/* ── FORM ────────────────────────────────────────────────────── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.4rem}
+.fg-full{grid-column:1/-1}
+.form-group{display:flex;flex-direction:column;gap:0.4rem}
+label{
+  font-size:0.7rem;font-weight:700;
+  letter-spacing:0.09em;text-transform:uppercase;color:var(--muted);
+}
+input,textarea,select{
+  font-family:'Barlow',sans-serif;font-size:0.9rem;
+  padding:0.7rem 1rem;
+  background:var(--bg);
+  border:1.5px solid var(--border);border-radius:7px;
+  color:var(--fg);outline:none;transition:border-color 0.2s,box-shadow 0.2s;
+  appearance:none;-webkit-appearance:none;
+}
+input:focus,textarea:focus,select:focus{
+  border-color:var(--navy);
+  box-shadow:0 0 0 3px rgba(0,43,79,0.1);
+  background:#fff;
+}
+textarea{resize:vertical;min-height:72px}
+select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7f8e' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 1rem center;
+  padding-right:2.5rem;cursor:pointer;
+}
+select:disabled{opacity:0.5;cursor:not-allowed}
+
+.form-hint{font-size:0.72rem;color:var(--muted-light);margin-top:0.25rem}
+
+/* ── BUTTONS ─────────────────────────────────────────────────── */
+.btn{
+  font-family:'Barlow',sans-serif;font-size:0.88rem;font-weight:600;
+  padding:0.72rem 1.8rem;border-radius:7px;border:none;cursor:pointer;transition:all 0.18s;
+}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-primary:hover{background:var(--navy-light);transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,43,79,0.25)}
+.btn-primary:disabled{background:#b0bec9;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-danger-outline{background:transparent;color:var(--danger);border:1.5px solid var(--danger)}
+.btn-danger-outline:hover{background:var(--danger);color:#fff}
+.btn-outline{background:transparent;color:var(--navy);border:1.5px solid var(--navy)}
+.btn-outline:hover{background:var(--navy);color:#fff}
+.btn-salmon{background:var(--salmon);color:#fff}
+.btn-salmon:hover{background:var(--salmon-light)}
+.btn-sm{padding:0.42rem 0.9rem;font-size:0.79rem;border-radius:5px}
+
+/* ── TRAINING CARDS ──────────────────────────────────────────── */
+.t-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:10px;padding:1.3rem 1.5rem;
+  margin-bottom:0.8rem;
+  display:grid;grid-template-columns:1fr auto;gap:1.2rem;align-items:center;
+  transition:border-color 0.2s,box-shadow 0.2s;
+}
+.t-card:hover{border-color:var(--navy-light);box-shadow:0 2px 12px rgba(0,43,79,0.08)}
+.t-area-badge{
+  display:inline-block;
+  font-size:0.66rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;
+  padding:0.18rem 0.6rem;border-radius:4px;
+  background:rgba(0,43,79,0.08);color:var(--navy);
+  margin-bottom:0.45rem;
+}
+.t-name{font-size:1rem;font-weight:600;color:var(--fg);margin-bottom:0.45rem}
+.t-meta{display:flex;flex-wrap:wrap;gap:0.4rem}
+.tag{
+  font-size:0.73rem;padding:0.2rem 0.6rem;
+  border-radius:4px;background:var(--bg);
+  color:var(--muted);border:1px solid var(--border);
+}
+.tag-att{background:rgba(26,158,110,0.08);color:var(--success);border-color:rgba(26,158,110,0.2)}
+.t-actions{display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:flex-end}
+
+/* ── SECTION DIVIDER ─────────────────────────────────────────── */
+.section-label{
+  font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:0.9rem;
+  display:flex;align-items:center;gap:0.5rem;
+}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ── EMPTY STATE ─────────────────────────────────────────────── */
+.empty{text-align:center;padding:4rem 2rem;color:var(--muted)}
+.empty .big{font-size:2.5rem;margin-bottom:0.75rem;opacity:0.3}
+.empty p{font-size:0.86rem}
+
+/* ── MODALS ──────────────────────────────────────────────────── */
+.overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,20,40,0.6);z-index:200;
+  align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);
+}
+.overlay.open{display:flex;animation:fadeUp 0.2s ease}
+.modal{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:2.2rem;max-width:440px;width:90%;
+  position:relative;box-shadow:0 24px 80px rgba(0,0,0,0.25);text-align:center;
+}
+.modal h3{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.5rem;font-weight:700;color:var(--navy);margin-bottom:0.25rem;
+}
+.modal-sub{font-size:0.82rem;color:var(--muted);margin-bottom:1.5rem}
+.modal-close{
+  position:absolute;top:1rem;right:1rem;background:none;border:none;
+  color:var(--muted);cursor:pointer;font-size:1.2rem;transition:color 0.2s;
+}
+.modal-close:hover{color:var(--fg)}
+#qrcode{
+  display:flex;justify-content:center;margin:1rem auto;
+  padding:1rem;background:#fff;border-radius:8px;
+  border:1px solid var(--border);width:fit-content;
+}
+.qr-hint{
+  font-size:0.74rem;color:var(--muted);
+  background:var(--bg);border-radius:6px;
+  padding:0.7rem 0.9rem;margin-bottom:1.2rem;line-height:1.7;text-align:left;
+}
+.modal-actions{display:flex;gap:0.75rem;justify-content:center}
+
+.att-modal{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:2rem;max-width:560px;width:90%;
+  position:relative;max-height:80vh;overflow-y:auto;
+  box-shadow:0 24px 80px rgba(0,0,0,0.25);
+}
+.att-modal h3{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.4rem;font-weight:700;color:var(--navy);margin-bottom:1.2rem;
+}
+.att-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:0.65rem 0.9rem;border-radius:7px;margin-bottom:0.35rem;
+  background:var(--bg);font-size:0.85rem;
+}
+.att-row-left strong{display:block;color:var(--fg);font-weight:600}
+.att-row-left span{font-size:0.75rem;color:var(--muted)}
+.att-row-right{font-size:0.73rem;color:var(--muted)}
+
+/* ── EXPORT ──────────────────────────────────────────────────── */
+.export-info{
+  background:rgba(0,43,79,0.04);border:1px solid rgba(0,43,79,0.12);
+  border-radius:8px;padding:1rem 1.2rem;margin-top:1.2rem;
+  font-size:0.83rem;color:var(--muted);line-height:1.7;
+}
+.export-info strong{color:var(--navy)}
+
+/* ── MISC ────────────────────────────────────────────────────── */
+.loader{
+  display:inline-block;width:16px;height:16px;
+  border:2px solid rgba(0,43,79,0.2);
+  border-top-color:var(--navy);
+  border-radius:50%;animation:spin 0.7s linear infinite;
+  vertical-align:middle;margin-right:8px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{
+  position:fixed;bottom:2rem;right:2rem;
+  background:var(--navy);border-radius:8px;
+  padding:0.9rem 1.4rem;font-size:0.85rem;color:#fff;
+  box-shadow:0 8px 32px rgba(0,0,0,0.2);z-index:999;
+  transform:translateY(20px);opacity:0;
+  transition:all 0.3s;pointer-events:none;
+}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{background:var(--success)}
+.toast.err{background:var(--danger)}
+
+.recent-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:0.8rem 0;border-bottom:1px solid var(--border);
+}
+.recent-row:last-child{border-bottom:none}
+
+@media(max-width:700px){aside{display:none}main{margin-left:0}}
+</style>
+</head>
+<body>
+
+<aside>
+  <div class="logo-area">
+    <!-- Multi-X Logo SVG -->
+    <svg class="logo-svg" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="48" height="48" rx="8" fill="#E8523A"/>
+      <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle"
+        font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="20"
+        fill="white" letter-spacing="1">MX</text>
+    </svg>
+    <div class="logo-text">
+      <div class="brand">Multi-X</div>
+      <div class="sub">Capacitaciones</div>
+    </div>
+  </div>
+
+  <nav>
+    <div class="nav-section">Principal</div>
+    <div class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard">
+      <span class="nav-icon">📊</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('nueva')" id="nav-nueva">
+      <span class="nav-icon">➕</span> Nueva Capacitación
+    </div>
+
+    <div class="nav-section">Gestión</div>
+    <div class="nav-item" onclick="showPage('lista')" id="nav-lista">
+      <span class="nav-icon">📋</span> Capacitaciones
+    </div>
+    <div class="nav-item" onclick="showPage('exportar')" id="nav-exportar">
+      <span class="nav-icon">📥</span> Exportar Datos
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <span class="dot" id="conn-dot"></span><span id="conn-text">Conectando...</span><br/>
+    Firebase Firestore · Sincronización en tiempo real
+  </div>
+</aside>
+
+<main>
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-breadcrumb">RRHH</span>
+      <span style="color:var(--border-strong)">›</span>
+      <span class="topbar-title" id="topbar-title">Dashboard</span>
+    </div>
+    <span class="live-badge" id="live-badge">● En vivo</span>
+  </div>
+
+  <div class="content">
+
+    <!-- ── DASHBOARD ──────────────────────────────────────────── -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div>
+          <h2>Dashboard</h2>
+          <p>Resumen de capacitaciones registradas en Firebase</p>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-num" id="stat-total">—</div>
+          <div class="stat-label">Capacitaciones</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-att">—</div>
+          <div class="stat-label">Total Asistentes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-hrs">—</div>
+          <div class="stat-label">Horas Capacitadas</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">Capacitaciones Recientes</div>
+        <div id="recent-list"><span class="loader"></span>Cargando...</div>
+      </div>
+    </div>
+
+    <!-- ── NUEVA CAPACITACIÓN ─────────────────────────────────── -->
+    <div class="page" id="page-nueva">
+      <div class="page-header">
+        <div>
+          <h2>Nueva Capacitación</h2>
+          <p>Registra una nueva capacitación y genera su código QR</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="form-grid">
+
+          <!-- ÁREA (selecciona primero) -->
+          <div class="form-group">
+            <label>Área *</label>
+            <select id="f-area" onchange="onAreaChange()">
+              <option value="">— Selecciona un área —</option>
+              <option>Administración y servicios</option>
+              <option>Agua Dulce</option>
+              <option>Agua Mar</option>
+              <option>Bodega / Abastecimiento</option>
+              <option>DIVING-X</option>
+              <option>Frigorífico</option>
+              <option>Laboratorio</option>
+              <option>Patio operaciones</option>
+              <option>Proceso Primario</option>
+              <option>Processing</option>
+              <option>Seguridad</option>
+            </select>
+          </div>
+
+          <!-- NOMBRE (depende del área) -->
+          <div class="form-group">
+            <label>Nombre de la Capacitación *</label>
+            <select id="f-nombre" disabled>
+              <option value="">— Selecciona un área primero —</option>
+            </select>
+            <div class="form-hint" id="nombre-hint">Selecciona el área para ver las capacitaciones disponibles</div>
+          </div>
+
+          <div class="form-group">
+            <label>Fecha *</label>
+            <input type="date" id="f-fecha"/>
+          </div>
+
+          <div class="form-group">
+            <label>Duración (horas) *</label>
+            <input type="number" id="f-duracion" min="0.5" step="0.5" placeholder="Ej: 4"/>
+          </div>
+
+          <div class="form-group">
+            <label>Relator / Instructor</label>
+            <input type="text" id="f-relator" placeholder="Nombre del relator (opcional)"/>
+          </div>
+
+          <div class="form-group fg-full">
+            <label>Descripción (opcional)</label>
+            <textarea id="f-desc" placeholder="Breve descripción del contenido..."></textarea>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="btn-registrar" onclick="registrar()">
+          Registrar y Generar QR →
+        </button>
+      </div>
+    </div>
+
+    <!-- ── LISTA ──────────────────────────────────────────────── -->
+    <div class="page" id="page-lista">
+      <div class="page-header">
+        <div>
+          <h2>Capacitaciones</h2>
+          <p>Sincronizado en tiempo real con Firebase</p>
+        </div>
+      </div>
+      <div id="lista-container"><span class="loader"></span>Cargando...</div>
+    </div>
+
+    <!-- ── EXPORTAR ───────────────────────────────────────────── -->
+    <div class="page" id="page-exportar">
+      <div class="page-header">
+        <div>
+          <h2>Exportar Datos</h2>
+          <p>Descarga registros en formato CSV compatible con Excel</p>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:0.9rem;color:var(--muted);margin-bottom:1.5rem">
+          Exporta todos los datos almacenados en Firebase Firestore como archivos CSV.
+        </div>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="exportCSV('cap')">⬇ Capacitaciones (CSV)</button>
+          <button class="btn btn-outline" onclick="exportCSV('att')">⬇ Asistentes (CSV)</button>
+        </div>
+        <div class="export-info">
+          <strong>¿Cómo abrir en Excel?</strong><br/>
+          Excel → Datos → Desde texto/CSV → selecciona el archivo → Delimitador: coma → Cargar.
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<!-- QR MODAL -->
+<div class="overlay" id="qrOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('qrOverlay')">✕</button>
+    <h3>Código QR generado</h3>
+    <p class="modal-sub" id="qr-subtitle">—</p>
+    <div id="qrcode"></div>
+    <div class="qr-hint" id="qr-hint">—</div>
+    <div class="modal-actions">
+      <button class="btn btn-primary btn-sm" onclick="imprimirQR()">🖨 Imprimir QR</button>
+      <button class="btn btn-outline btn-sm" onclick="closeModal('qrOverlay')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ATTENDEES MODAL -->
+<div class="overlay" id="attOverlay">
+  <div class="att-modal">
+    <button class="modal-close" onclick="closeModal('attOverlay')">✕</button>
+    <h3 id="att-modal-title">Asistentes</h3>
+    <div id="att-modal-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── MATRIZ DE CAPACITACIONES ────────────────────────────────────
+const MATRIZ = {
+  "Administración y servicios": [
+    "Almacenamiento y Manipulación de Sustancias Químicas Peligrosas",
+    "Conducción defensiva bajo condiciones adversas",
+    "Ergonomía puestos de trabajo Administrativo",
+    "Identificación de Peligros y Evaluación de Riesgos en el Trabajo",
+    "Operación máquina Compactadora",
+    "Primeros Auxilios ante Emergencias de Salud",
+    "Protocolo Manejo Manual de Cargas",
+    "Teoría del fuego y Manejo de Extintores Portátiles"
+  ],
+  "Agua Dulce": [
+    "Capacitación de Trabajos en caliente, soldadura, oxicorte, esmerilado, medidas preventivas, EPP, permisos y control de riesgos.",
+    "Curso de Soldadura industrial: teoría y práctica en soldadura al arco, MIG, TIG u otros procesos",
+    "Exposición a Ruido",
+    "Extintores de Incendio",
+    "Hombre al Agua",
+    "Identificación de Peligro y Evaluación de Riesgos | Mapas de Riesgos",
+    "Manejo Manual de Carga",
+    "Manipulación y Almacenamiento Seguro de Sustancias Peligrosas (SUPSEL)",
+    "Planes de Emergencia",
+    "Primeros Auxilios",
+    "Radiación UV",
+    "Sistema de Bloqueo y Etiquetado de Energías (LOTO)",
+    "Trabajo Seguro en Altura y Uso Correcto de Arnés",
+    "Trabajo seguro en Izaje de Carga",
+    "Trastornos músculos esqueléticos"
+  ],
+  "Agua Mar": [
+    "Baño de peces",
+    "Buceo Seguro",
+    "Capacitación y procedimiento de mortalidades masivas",
+    "Capacitación de buenas Practicas de higiene y salud",
+    "Capacitación de sustancias peligrosas",
+    "Capacitación de trabajos en caliente",
+    "Capacitación ensilaje",
+    "Capacitación equipos móviles/tableros eléctricos",
+    "Capacitación faena baño de peces (Crear supervisores de baños)",
+    "Capacitación izaje de carga",
+    "Capacitación maniobra de viraje",
+    "Capacitación primera respuesta de emergencias de salud",
+    "Capacitación responsabilidad en materias de seguridad en el trabajo",
+    "Capacitación uso de EPP",
+    "Circular O-31/020",
+    "Conceptos básicos de buceo",
+    "Conceptos básicos en buceo (Jefes de centro y asistentes de centros)",
+    "Curso Identificación de Peligros y Evaluación de Riesgos en el Trabajo",
+    "Curso de identificación de peligros y evaluación de riesgos",
+    "Curso manejo de extintores",
+    "Curso primeros Auxilios y Uso de DEA",
+    "Difusión Protocolo Riesgos Psicosocial",
+    "Evitando dolencias Musculoesqueléticas de extremidades superiores en su trabajo",
+    "Exposición a ruido",
+    "Exposición al frío",
+    "Factores psicosociales y salud mental en el trabajo",
+    "Gestión en Faenas de Buceo",
+    "Hombre al agua",
+    "Identificación de peligros y evaluación de los riesgos",
+    "Inducción en Seguridad y Salud Ocupacional – Centro de Cultivo",
+    "Inspección de Trabajos de Buceo: Supervisión y control de faena segura",
+    "Investigación de Incidentes y Causa Raíz",
+    "Izaje de cargas",
+    "Manejo a la defensiva en Condiciones Adversas",
+    "Manejo de sustancias químicas y mercancías peligrosas asociadas al baño de peces",
+    "Manejo manual de cargas",
+    "Manipulación y almacenamiento de sustancias peligrosas",
+    "Mapas de Riesgo",
+    "Peligros de la Radiación UV",
+    "Practicas Seguras en Actividades de Izaje",
+    "Primeros Auxilios",
+    "Protegiéndonos del Ruido en el Lugar de Trabajo",
+    "Radiación UV",
+    "Responsabilidad Legal en Materia de Seguridad",
+    "Sistema de Bloqueo y Etiquetado de Energías",
+    "Taller Hombre al Agua",
+    "Teoría del Fuego y Manejo de Extintores Portátiles",
+    "Trabajo en Equipo",
+    "Trabajos en caliente (trabajos de soldadura)",
+    "Técnicas De Prevención En La Higiene Y Manipulación De Alimentos",
+    "Técnicas de Izaje y Señales Rigger",
+    "Uso de sistemas de ensilaje",
+    "Uso ramal de incendio y achique"
+  ],
+  "Bodega / Abastecimiento": [
+    "Almacenamiento y Manipulación de Sustancias Químicas Peligrosas",
+    "Conducción defensiva bajo condiciones adversas",
+    "Identificación de Peligros y Evaluación de Riesgos en el Trabajo",
+    "Operación Máquina Armadora de Cajas",
+    "Operación de máquinas grúas horquillas y Apiladores Eléctricos",
+    "Primeros Auxilios ante Emergencias de Salud",
+    "Protocolo Manejo Manual de Cargas",
+    "Protocolo TMERT",
+    "Protocolo de Exposición a Frío",
+    "Protocolo de Protección Radiación UV",
+    "Sistemas de Refrigeración con Amoniaco",
+    "Teoría del fuego y Manejo de Extintores Portátiles",
+    "Uso de sistema de anclaje y arnés de seguridad en trabajos en altura"
+  ],
+  "DIVING-X": [
+    "Curso Identificación de Peligros y Evaluación de Riesgos en el Trabajo",
+    "Curso Técnicas de Izaje y Rigger",
+    "Física y Fisiología Aplicada al Buceo",
+    "Gestión y liderazgo para supervisores de buceo",
+    "Interpretación Básica De Tablas De Buceo De La Marina Norteamericana",
+    "Oxigenación Normobárica en Faenas de Buceo",
+    "Peligros de la Radiación UV",
+    "Primeros Auxilios en buceo",
+    "Responsabilidad Legal en Materia de Seguridad",
+    "Teoría del Fuego y Manejo de Extintores Portátiles",
+    "Técnicas De Prevención En La Higiene Y Manipulación De Alimentos",
+    "Uso y Mantenimiento Mascaron Kirby Morgan 28",
+    "Uso y Mantenimiento Traje Seco"
+  ],
+  "Frigorífico": [
+    "Identificación de Peligros y Evaluación de Riesgos en el Trabajo",
+    "Operación de Máquina Enzunchadora",
+    "Operación de máquinas grúas horquillas y Apiladores Eléctricos",
+    "Operación de transpaleta manual y eléctrica",
+    "Primeros Auxilios ante Emergencias de Salud",
+    "Protocolo Manejo Manual de Cargas",
+    "Protocolo de Exposición a Frío",
+    "Protocolo de Exposición a Ruido",
+    "Teoría del fuego y Manejo de Extintores Portátiles"
+  ],
+  "Laboratorio": [
+    "Almacenamiento y Manipulación de Sustancias Químicas Peligrosas",
+    "Identificación de Peligros y Evaluación de Riesgos en el Trabajo",
+    "Manipulación de equipos Autoclaves",
+    "Primeros Auxilios ante Emergencias de Salud",
+    "Protocolo TMERT",
+    "Teoría del fuego y Manejo de Extintores Portátiles"
+  ],
+  "Patio operaciones": [
+    "Almacenamiento y Manipulación de Sustancias Químicas Peligrosas",
+    "Conducción defensiva bajo condiciones adversas",
+    "Identificación de Peligros y Evaluación de Riesgos en el Trabajo",
+    "Operación Máquina Compactadora",
+    "Operación de máquinas grúas horquillas y Apiladores Eléctricos",
+    "Primeros Auxilios ante Emergencias de Salud",
+    "Protocolo de Exposición a Frío",
+    "Protocolo de Protección Radiación UV",
+    "Recarga de combustible GLP a grúas horquilla",
+    "Teoría del fuego y Manejo de Extintores Portátiles"
+  ],
+  "Proceso Primario": [
+    "Conducción defensiva bajo condiciones adversas",
+    "Hombre al Agua",
+    "Identificación de Peligros y Evaluación de Riesgos en el Trabajo",
+    "Primeros Auxilios ante Emergencias de Salud",
+    "Protocolo de Exposición a Frío",
+    "Protocolo de Protección Radiación UV",
+    "Teoría del fuego y Manejo de Extintores Portátiles"
+  ],
+  "Processing": [
+    "Defensa en máquinas",
+    "Manejo de sustancias químicas peligrosas",
+    "Op. Básicas para el bloqueo de energías peligrosas en máquinas y equipos",
+    "Prevención de Riesgos Eléctricos",
+    "Principios de seguridad en máquinas y equipos",
+    "Prácticas seguras en sistemas de refrigeración con amoniaco",
+    "Responsabilidad legal en materia de Seguridad y Salud en el Trabajo",
+    "Seguridad en entornos de trabajo con cintas transportadoras",
+    "Supervisión y liderazgo en prevención de riesgos",
+    "Teoría del Fuego y Manejo de Extintores Portátiles",
+    "identificación de peligros y evaluación de riesgos en el trabajo"
+  ],
+  "Seguridad": [
+    "Conducción defensiva bajo condiciones adversas",
+    "Ergonomía puestos de trabajo Administrativo",
+    "Identificación de Peligros y Evaluación de Riesgos en el Trabajo",
+    "Primeros Auxilios ante Emergencias de Salud",
+    "Protocolo de Exposición a Frío",
+    "Protocolo de Protección Radiación UV",
+    "Teoría del fuego y Manejo de Extintores Portátiles"
+  ]
+};
+
+// ── MATRIZ CHANGE HANDLER ────────────────────────────────────────
+function onAreaChange() {
+  const area = document.getElementById('f-area').value;
+  const sel  = document.getElementById('f-nombre');
+  const hint = document.getElementById('nombre-hint');
+
+  if (!area) {
+    sel.innerHTML = '<option value="">— Selecciona un área primero —</option>';
+    sel.disabled = true;
+    hint.textContent = 'Selecciona el área para ver las capacitaciones disponibles';
+    return;
+  }
+
+  const caps = MATRIZ[area] || [];
+  sel.innerHTML = '<option value="">— Selecciona una capacitación —</option>'
+    + caps.map(c => `<option value="${c}">${c}</option>`).join('');
+  sel.disabled = false;
+  hint.textContent = `${caps.length} capacitaciones disponibles para ${area}`;
+}
+
+// ── CORE ─────────────────────────────────────────────────────────
+let trainings = [];
+let currentQRId = null;
+
+function toast(msg, type='ok'){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'toast show '+type;
+  setTimeout(()=>el.classList.remove('show'), 3200);
+}
+function fmtDate(d){ return d ? new Date(d+'T12:00:00').toLocaleDateString('es-CL',{day:'2-digit',month:'short',year:'numeric'}) : '—'; }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+const PAGE_TITLES = {
+  dashboard: 'Dashboard', nueva: 'Nueva Capacitación',
+  lista: 'Capacitaciones', exportar: 'Exportar Datos'
+};
+
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  document.getElementById('topbar-title').textContent = PAGE_TITLES[name] || name;
+}
+
+document.addEventListener('fb-ready', () => {
+  document.getElementById('conn-dot').classList.add('green');
+  document.getElementById('conn-text').textContent = 'Conectado';
+
+  const q = window._query(
+    window._collection(window._db,'capacitaciones'),
+    window._orderBy('creadoEn','desc')
+  );
+  window._onSnapshot(q, snap => {
+    trainings = snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderDashboard();
+    renderLista();
+  }, err => {
+    document.getElementById('conn-text').textContent = 'Sin conexión';
+    toast('Error de conexión: '+err.message,'err');
+  });
+});
+
+function renderDashboard(){
+  const totalAtt = trainings.reduce((s,t)=>s+(t.totalAsistentes||0),0);
+  const totalHrs = trainings.reduce((s,t)=>s+(parseFloat(t.duracion)||0),0);
+  document.getElementById('stat-total').textContent = trainings.length;
+  document.getElementById('stat-att').textContent   = totalAtt;
+  document.getElementById('stat-hrs').textContent   = totalHrs%1===0?totalHrs:totalHrs.toFixed(1);
+
+  const el = document.getElementById('recent-list');
+  if(!trainings.length){
+    el.innerHTML='<div style="color:var(--muted);font-size:0.85rem">Sin registros aún.</div>';
+    return;
+  }
+  el.innerHTML = trainings.slice(0,5).map(t=>`
+    <div class="recent-row">
+      <div>
+        ${t.area ? `<span style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--navy);opacity:0.6">${t.area}</span><br/>` : ''}
+        <span style="font-size:0.9rem;font-weight:600">${t.nombre}</span>
+        <div style="font-size:0.74rem;color:var(--muted);margin-top:0.2rem">📅 ${fmtDate(t.fecha)}</div>
+      </div>
+      <span class="tag tag-att">👥 ${t.totalAsistentes||0}</span>
+    </div>`).join('');
+}
+
+async function registrar(){
+  if(!window._fbReady){ toast('Firebase no listo','err'); return; }
+  const area     = document.getElementById('f-area').value.trim();
+  const nombre   = document.getElementById('f-nombre').value.trim();
+  const fecha    = document.getElementById('f-fecha').value;
+  const duracion = document.getElementById('f-duracion').value;
+  const relator  = document.getElementById('f-relator').value.trim();
+  const desc     = document.getElementById('f-desc').value.trim();
+
+  if(!area||!nombre||!fecha||!duracion){
+    toast('Completa los campos obligatorios (*)','err'); return;
+  }
+
+  const btn = document.getElementById('btn-registrar');
+  btn.disabled=true; btn.innerHTML='<span class="loader"></span>Guardando...';
+
+  try {
+    const ref = await window._addDoc(window._collection(window._db,'capacitaciones'),{
+      area, nombre, fecha,
+      duracion: parseFloat(duracion),
+      relator, desc,
+      totalAsistentes: 0,
+      creadoEn: new Date().toISOString()
+    });
+
+    // Reset form
+    document.getElementById('f-area').value = '';
+    document.getElementById('f-nombre').innerHTML = '<option value="">— Selecciona un área primero —</option>';
+    document.getElementById('f-nombre').disabled = true;
+    document.getElementById('nombre-hint').textContent = 'Selecciona el área para ver las capacitaciones disponibles';
+    ['f-fecha','f-duracion','f-relator','f-desc'].forEach(i=>document.getElementById(i).value='');
+
+    toast('✅ Capacitación registrada en Firebase');
+    showPage('lista');
+    setTimeout(()=>showQR(ref.id), 500);
+  } catch(e){ toast('Error: '+e.message,'err'); }
+  finally { btn.disabled=false; btn.innerHTML='Registrar y Generar QR →'; }
+}
+
+function renderLista(){
+  const c = document.getElementById('lista-container');
+  if(!trainings.length){
+    c.innerHTML=`<div class="empty"><div class="big">📂</div><p>Sin capacitaciones registradas.</p></div>`;
+    return;
+  }
+  c.innerHTML = trainings.map(t=>`
+    <div class="t-card">
+      <div>
+        ${t.area ? `<span class="t-area-badge">${t.area}</span>` : ''}
+        <div class="t-name">${t.nombre}</div>
+        <div class="t-meta">
+          <span class="tag">📅 ${fmtDate(t.fecha)}</span>
+          <span class="tag">⏱ ${t.duracion}h</span>
+          ${t.relator?`<span class="tag">👤 ${t.relator}</span>`:''}
+          <span class="tag tag-att">👥 ${t.totalAsistentes||0} asistentes</span>
+        </div>
+      </div>
+      <div class="t-actions">
+        <button class="btn btn-outline btn-sm" onclick="showQR('${t.id}')">Ver QR</button>
+        <button class="btn btn-outline btn-sm" onclick="showAttendees('${t.id}')">Asistentes</button>
+        <button class="btn btn-danger-outline btn-sm" onclick="eliminar('${t.id}','${t.nombre.replace(/'/g,"\\'")}')">Eliminar</button>
+      </div>
+    </div>`).join('');
+}
+
+async function eliminar(id,nombre){
+  if(!confirm(`¿Eliminar "${nombre}"? Esta acción no se puede deshacer.`)) return;
+  try {
+    await window._deleteDoc(window._doc(window._db,'capacitaciones',id));
+    toast('Capacitación eliminada');
+  } catch(e){ toast('Error: '+e.message,'err'); }
+}
+
+function showQR(id){
+  currentQRId = id;
+  const t = trainings.find(x=>x.id===id);
+  if(!t) return;
+  const base = 'https://javierlama123-boop.github.io/Capacitaciones_repositorio/';
+  const url  = base + 'asistencia.html?id='+id;
+  document.getElementById('qr-subtitle').textContent = t.nombre;
+  document.getElementById('qr-hint').innerHTML =
+    `${t.area ? `<strong style="color:var(--navy)">${t.area}</strong><br/>` : ''}
+     📅 ${fmtDate(t.fecha)} · ⏱ ${t.duracion}h<br/>
+     <span style="font-size:0.7rem;display:block;margin-top:0.3rem">Los asistentes escanean este QR con su celular para registrar asistencia.</span>`;
+  document.getElementById('qrcode').innerHTML='';
+  new QRCode(document.getElementById('qrcode'),{
+    text:url,width:190,height:190,
+    colorDark:'#002B4F',colorLight:'#ffffff',
+    correctLevel:QRCode.CorrectLevel.H
+  });
+  document.getElementById('qrOverlay').classList.add('open');
+}
+
+function imprimirQR(){
+  const t = trainings.find(x=>x.id===currentQRId);
+  const canvas = document.querySelector('#qrcode canvas');
+  if(!canvas||!t) return;
+  const w = window.open('');
+  w.document.write(`<html><head><title>QR · ${t.nombre}</title>
+  <style>
+    body{font-family:'Barlow',sans-serif;text-align:center;padding:50px;color:#002B4F}
+    .brand{font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#E8523A;margin-bottom:8px}
+    h2{font-size:20px;margin-bottom:4px}
+    p{color:#6b7f8e;font-size:13px;margin-bottom:20px}
+    img{width:220px;height:220px;border:2px solid #dce3ea;border-radius:8px}
+    .meta{margin-top:16px;font-size:12px;color:#97aab6;line-height:2}
+    .note{margin-top:18px;background:#f4f6f8;border-radius:8px;padding:12px;font-size:11px;color:#6b7f8e;max-width:300px;margin-left:auto;margin-right:auto}
+  </style></head><body>
+  <div class="brand">Multi-X · Capacitaciones</div>
+  ${t.area ? `<div style="font-size:11px;color:#E8523A;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px">${t.area}</div>` : ''}
+  <h2>${t.nombre}</h2>
+  <p>Escanea para registrar tu asistencia</p>
+  <img src="${canvas.toDataURL()}"/>
+  <div class="meta">📅 ${fmtDate(t.fecha)} &nbsp;|&nbsp; ⏱ ${t.duracion}h${t.relator?' &nbsp;|&nbsp; 👤 '+t.relator:''}</div>
+  <div class="note">☁️ Conectado a Firebase · Asistencia en tiempo real</div>
+  </body></html>`);
+  w.document.close(); setTimeout(()=>w.print(),400);
+}
+
+async function showAttendees(capId){
+  const t = trainings.find(x=>x.id===capId);
+  if(!t) return;
+  document.getElementById('att-modal-title').textContent = '👥 '+t.nombre;
+  const body = document.getElementById('att-modal-body');
+  body.innerHTML = '<span class="loader"></span>Cargando desde Firebase...';
+  document.getElementById('attOverlay').classList.add('open');
+  try {
+    const snap = await window._getDocs(window._collection(window._db,'capacitaciones',capId,'asistentes'));
+    const lista = snap.docs.map(d=>d.data());
+    if(!lista.length){
+      body.innerHTML='<div style="text-align:center;padding:2rem;color:var(--muted)">Sin asistentes registrados.</div>';
+      return;
+    }
+    body.innerHTML = `<div style="font-size:0.78rem;color:var(--muted);margin-bottom:0.9rem;font-weight:600">${lista.length} participante(s)</div>`
+      + lista.map(a=>`
+        <div class="att-row">
+          <div class="att-row-left">
+            <strong>${a.nombre}</strong>
+            <span>${[a.rut,a.area].filter(Boolean).join(' · ')}</span>
+          </div>
+          <div class="att-row-right">${new Date(a.hora).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}</div>
+        </div>`).join('');
+  } catch(e){ body.innerHTML=`<div style="color:var(--danger);padding:1rem">Error: ${e.message}</div>`; }
+}
+
+async function exportCSV(type){
+  toast('Preparando exportación...');
+  try {
+    if(type==='cap'){
+      const csv = 'ID,Área,Nombre del Curso,Fecha,Duración (hrs),Relator,Descripción,N° Asistentes\n'
+        +trainings.map(t=>[t.id,q(t.area||''),q(t.nombre),t.fecha,t.duracion,q(t.relator||''),q(t.desc||''),(t.totalAsistentes||0)].join(',')).join('\n');
+      dl(csv,'capacitaciones.csv');
+    } else {
+      let rows=['ID Capacitación,Área,Nombre del Curso,Nombre Completo,RUT,Área Participante,Hora de Registro'];
+      for(const t of trainings){
+        const snap=await window._getDocs(window._collection(window._db,'capacitaciones',t.id,'asistentes'));
+        snap.docs.forEach(d=>{const a=d.data();rows.push([t.id,q(t.area||''),q(t.nombre),q(a.nombre),q(a.rut||''),q(a.area||''),a.hora].join(','));});
+      }
+      dl(rows.join('\n'),'asistencia.csv');
+    }
+    toast('✅ Archivo descargado correctamente');
+  } catch(e){ toast('Error al exportar: '+e.message,'err'); }
+}
+function q(s){return '"'+String(s||'').replace(/"/g,'""')+'"';}
+function dl(csv,name){const b=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();}
+</script>
+</body>
+</html>
